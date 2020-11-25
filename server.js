@@ -3,9 +3,10 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const errorHandler = require('errorhandler');
+const apiRouter = require('./api/api')
 
 const app = express();
-express PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, () => console.log(`Listening on port: ${PORT}`));
 
@@ -14,7 +15,7 @@ app.use(cors());
 
 app.use('/api', apiRouter);
 
-app.use(errorhandler());
+app.use(errorHandler());
 app.use(morgan('dev'));
 
 module.exports = app;
