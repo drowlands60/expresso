@@ -4,10 +4,11 @@ const menuRouter = express.Router();
 const sqlite3 = require('sqlite3');
 const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite');
 
-menuRouter.param('menuId', (req, res, next, id) => {
-    db.get('SELECT * FROM Menu WHERE id = $id',
-    {$id: id},
-    (err, row) => {
+menuRouter.param('menuId', (req, res, next, menuId) => {
+    const sql = 'SELECT * FROM Menu WHERE id = $id';
+    const values = {$id: menuId};
+
+    db.get( sql, values, (err, row) => {
         if (err) {
             next(err);
         } else if (!row) {
@@ -34,17 +35,21 @@ menuRouter.get('/:menuId', (req, res, next) => {
 });
 
 menuRouter.post('/', (req, res, next) => {
-    const text = req.body.menu;
-    if(!text) {
+    const title = req.body.menu.title;
+    
+    if(!title) {
         return res.status(400).send();
     }
 
-    db.run(`INSERT INTO Menu (text) VALUES ($text)`,
-        {$text: text}, function(err) {
+    const sql = `INSERT INTO Menu (title) VALUES ($title)`;
+    const values = {$title: title};
+
+    db.run(sql, values, function(err) {
         if (err) {
             next(err);
         } else {
-            db.get(`SELECT * FROM Menu WHERE id = ${this.lastID}`, (err, row) => {
+            db.get(`SELECT * FROM Menu WHERE id = ${this.lastID}`,
+            (err, row) => {
                 res.status(201).send({menu: row});
             });
         }
@@ -76,25 +81,25 @@ menuRouter.put('/:menuId', (req, res, next) => {
 
 menuRouter.delete('/:menuid', (req, res, next) => {
     
-    const id = req.body.menu.id;
+    const id = req.params.id;
+    const menuItemSql = `SELECT * FROM MenuItem WHERE menu_id = $id`;
+    const menuItemValues = {$id: id};
     
-    db.all(`SELECT * FROM MenuItem WHERE menu_id = $id`,
-    {$id: id},
-    (err, rows) => {
+    db.get(menuItemSql, menuItemValues, (err, rows) => {
         if (err) {
             next(err);
         } else if (rows) {
-            res.status(400).send();
+            return res.status(400).send();
         } else {
-            db.run(`DELETE FROM Menu WHERE id = $id`,
-            {$id: id},
-            (err) => {
+            const menuSql = `DELETE FROM Menu WHERE id = $id`;
+            const menuValues = {$id: id};
+            db.run(menuSql, menuValues, (err) => {
                 if (err) {
                     next(err);
                 } else {
                     res.status(204).send();
                 }
-            })
+            });
         }
     });
 });
