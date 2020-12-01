@@ -1,4 +1,4 @@
-const express = require('express');
+/*const express = require('express');
 const menuRouter = express.Router();
 
 const sqlite3 = require('sqlite3');
@@ -105,3 +105,4 @@ menuRouter.delete('/:menuid', (req, res, next) => {
 });
 
 module.exports = menuRouter;
+*/
