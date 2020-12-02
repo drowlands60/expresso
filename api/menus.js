@@ -1,4 +1,4 @@
-/*const express = require('express');
+const express = require('express');
 const menuRouter = express.Router();
 
 const sqlite3 = require('sqlite3');
@@ -17,7 +17,7 @@ menuRouter.param('menuId', (req, res, next, menuId) => {
         } else if (!row) {
              res.status(404).send();
         } else {
-            req.menu = row;
+            
             next();
         }
     });
@@ -112,4 +112,3 @@ menuRouter.delete('/:menuid', (req, res, next) => {
 });
 
 module.exports = menuRouter;
-*/

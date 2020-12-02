@@ -7,7 +7,7 @@ const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite'
 const timesheetRouter = require('./timesheets');
 
 employeeRouter.param('employeeId', (req, res, next, id) => {
-    db.get('SELECT * FROM Employee WHERE id = $id', 
+    db.get('SELECT * FROM Employee WHERE Employee.id = $id', 
     {$id: id},
     (err, row) => {
         if(err){
@@ -16,7 +16,7 @@ employeeRouter.param('employeeId', (req, res, next, id) => {
             req.employee = row;
             next();
         } else {
-            res.status(404).send();
+            res.sendStatus(404);
         }
     });
 });
@@ -24,17 +24,17 @@ employeeRouter.param('employeeId', (req, res, next, id) => {
 employeeRouter.use('/:employeeId/timesheets', timesheetRouter);
 
 employeeRouter.get('/', (req, res, next) => {
-    db.all('SELECT * FROM Employee WHERE is_current_employee = 1', (err, rows) => {
+    db.all('SELECT * FROM Employee WHERE Employee.is_current_employee = 1', (err, rows) => {
         if(err){
             next(err);
         }else {
-            res.status(200).send({employees: rows});
+            res.status(200).json({employees: rows});
         }
     });
 });
 
 employeeRouter.get('/:employeeId', (req, res, next) => {
-    res.status(200).send({employee: req.employee});
+    res.status(200).json({employee: req.employee});
       
 });
 
@@ -45,7 +45,7 @@ employeeRouter.post('/', (req, res, next) => {
     const employed = req.body.employee.is_current_employee === 0 ? 0 : 1;
 
     if(!name || !position || !wage){
-        return res.status(400).send();
+        return res.sendStatus(400);
     };
 
     const sql = 'INSERT INTO Employee (name, position, wage, is_current_employee) VALUES ($name, $position, $wage, $employed)';
@@ -55,8 +55,8 @@ employeeRouter.post('/', (req, res, next) => {
         if(err) {
             next(err);
         } else {
-            db.get(`SELECT * FROM Employee WHERE id = ${this.lastID}`, (err, row) => {
-                res.status(201).send({employee: row});
+            db.get(`SELECT * FROM Employee WHERE Employee.id = ${this.lastID}`, (err, row) => {
+                res.status(201).json({employee: row});
             });
         }
     });
@@ -65,49 +65,38 @@ employeeRouter.post('/', (req, res, next) => {
 
 
 employeeRouter.put('/:employeeId', (req, res, next) => {
-    //const id = req.params.employeeId;
     const name = req.body.employee.name;
     const position = req.body.employee.position;
     const wage = req.body.employee.wage;
-    let employed = req.body.employee.is_current_employee;
-    
-    
-    
-    if (employed === 0) {
-        employed = 0;
-    } else {
-        employed = 1;
-    };
+    let employed = req.body.employee.is_current_employee === 0 ? 0 : 1;
     
     if(!name || !position || !wage){
-        return res.status(400).send();
+        return res.sendStatus(400);
     }
 
-    const sql = `UPDATE Employee SET name = $name, position = $position, wage = $wage, is_current_employee = $employed WHERE id = $id`;
-    const values = {$id: req.params.employeeId, $name: name, $position: position, $wage: wage, $employed: employed};
-    db.run(sql, values, err => {
+    const sql = `UPDATE Employee SET name = $name, position = $position, wage = $wage, is_current_employee = $employed WHERE Employee.id = $id`;
+    const values = {$name: name, $position: position, $wage: wage, $employed: employed, $id: req.params.employeeId};
+    db.run(sql, values, (err) => {
         if(err){
             next(err);
         } else {
-            db.get(`SELECT * FROM Employee WHERE id = ${req.params.employeeId}`, (err, row) => {
-                res.status(200).send({employee: row});
+            db.get(`SELECT * FROM Employee WHERE Employee.id = ${req.params.employeeId}`, (err, row) => {
+                res.status(200).json({employee: row});
             });
         }
     }); 
-
 });
 
 employeeRouter.delete('/:employeeId', (req, res, next) => {
-    const id = req.params.employeeId;
-    const sql = `UPDATE Employee SET is_current_employee = 0 WHERE id = $id`;
-    values = {$id: id};
+    const sql = `UPDATE Employee SET is_current_employee = 0 WHERE Employee.id = $id`;
+    values = {$id: req.params.employeeId};
 
-    db.run(sql, values, function(err) {
+    db.run(sql, values, (err) => {
         if (err) {
             next(err);
         } else {
-            db.get(`SELECT * FROM Employee WHERE id = ${id}`, (err, row) => {
-                res.status(200).send({employee: row});
+            db.get(`SELECT * FROM Employee WHERE Employee.id = ${req.params.employeeId}`, (err, row) => {
+                res.status(200).json({employee: row});
         
             });
         }
